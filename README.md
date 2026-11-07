@@ -47,6 +47,9 @@ Please refer to the [Documentation](./dockerimage/codesign/) for the provided [D
 
 Please refer to the [Documentation](./dockerimage/innosetup/) for the provided [Docker Image `jotools/innosetup`](./dockerimage/innosetup/). It includes information about how to set it all up, along with an example to create a *(codesigned)* Windows installer.
 
+> **Note**  
+> Version 3.0.0 of the Docker Image `jotools/innosetup` includes InnoSetup 7. Please have a look at the [Upgrade Notes](./dockerimage/innosetup/README.md#upgrade-notes).
+
 ## Xojo Example Project
 
 This repository includes a Xojo Example Project `AAS CodeSign InnoSetup.xojo_project` which uses
