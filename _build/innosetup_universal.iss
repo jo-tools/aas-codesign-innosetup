@@ -14,10 +14,19 @@
 ; ------------------------------------------------------------------------
 ; one of the following
 ; /DcsBuildTargetWIN32 | /DcsBuildTargetWIN64 | /DcsBuildTargetARM64
+; Note: InnoSetup 7 is required (SetupArchitecture, GetFileProductVersionString)
+; - WIN32: 32Bit Setup (x86)
+; - WIN64: 64Bit Setup (x64)
+; - ARM64: depends on csMinVersion (there is no ARM64 Setup)
+;          Windows on ARM runs Intel binaries via emulation:
+;          Windows 10 on ARM can only emulate x86 (32Bit),
+;          Windows 11 on ARM can also emulate x64 (64Bit).
+;          csMinVersion below 10.0.22000 (Windows 10): 32Bit Setup (x86)
+;          csMinVersion 10.0.22000 or higher (Windows 11): 64Bit Setup (x64)
 ; ------------------------------------------------------------------------
 ; Minimum Version of Windows (for Installation Requirements)
 ; ------------------------------------------------------------------------
-; /DcsMinVersion="My App Publisher"
+; /DcsMinVersion="major.minor.build" (Windows version)
 ; Xojo 2025r1.1: Require Windows 10 Version 1903 (May 2019 Update)
 ; /DcsMinVersion="10.0.18362"
 ; Xojo 2024r4.2: Require Windows 8.1 with Update 1
@@ -61,27 +70,7 @@
   #define csMinVersion "10.0.18362"
 #endif
 
-#define ApplicationVersion	GetFileProductVersion(AddBackslash(SourcePath) + csExeName)
-
-//
-// GetStringFileInfo standard names
-//
-#define COMPANY_NAME       "CompanyName"
-#define FILE_DESCRIPTION   "FileDescription"
-#define FILE_VERSION       "FileVersion"
-#define INTERNAL_NAME      "InternalName"
-#define LEGAL_COPYRIGHT    "LegalCopyright"
-#define ORIGINAL_FILENAME  "OriginalFilename"
-#define PRODUCT_NAME       "ProductName"
-#define PRODUCT_VERSION    "ProductVersion"
-//
-// GetStringFileInfo helpers
-//
-#define GetFileCompany(str FileName) GetStringFileInfo(FileName, COMPANY_NAME)
-#define GetFileCopyright(str FileName) GetStringFileInfo(FileName, LEGAL_COPYRIGHT)
-#define GetFileDescription(str FileName) GetStringFileInfo(FileName, FILE_DESCRIPTION)
-#define GetFileProductVersion(str FileName) GetStringFileInfo(FileName, PRODUCT_VERSION)
-#define GetFileVersionString(str FileName) GetStringFileInfo(FileName, FILE_VERSION)
+#define ApplicationVersion	GetFileProductVersionString(AddBackslash(SourcePath) + csExeName)
 
 
 [Setup]
@@ -101,15 +90,26 @@ WizardStyle=modern
 ; Note: Remove 'not arm64' if you want to allow WIN32 or WIN64 apps to run on Windows ARM
 ;       This example will only allow installing the ARM64 build on Windows ARM
 #if defined(csBuildTargetWIN32)
+; 32Bit Setup
+  SetupArchitecture=x86
 ; never allow a WIN32 to be installed on ARM64
   ArchitecturesAllowed=not arm64
 #elif defined(csBuildTargetWIN64)
+; 64Bit Setup (runs on x64 Windows and on Windows 11 on ARM64)
+  SetupArchitecture=x64
   ArchitecturesInstallIn64BitMode=x64compatible
 ; if you want to prevent installing the WIN64 Intel Build on ARM64 (even if it works)
 ; ArchitecturesAllowed=x64compatible and not arm64
 ; allow installing the WIN64 Intel Build on ARM64
   ArchitecturesAllowed=x64compatible
 #elif defined(csBuildTargetARM64)
+; 64Bit Setup only if Windows 11 is required (Windows 10 on ARM can't emulate x64)
+; Note: StrToVersion expects 4 components (else 10.0.22000 is parsed as 10.0.0.22000)
+#if StrToVersion(csMinVersion + ".0") >= StrToVersion("10.0.22000.0")
+  SetupArchitecture=x64
+#else
+  SetupArchitecture=x86
+#endif
 ; require ARM64 - the application won't run on Intel
   ArchitecturesInstallIn64BitMode=arm64
   ArchitecturesAllowed=arm64

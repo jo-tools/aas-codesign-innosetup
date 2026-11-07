@@ -2,7 +2,7 @@
 
 The Docker Image is based on Debian and has the following components installed:
 - A couple of required Libraries
-  - curl, jq, default-jdk
+  - curl, jq, Java Runtime *(default-jre-headless)*
 - [jsign](https://github.com/ebourg/jsign)  
   Authenticode signing tool in Java
 - `aas-codesign.sh` and `pfx-codesign.sh`  
@@ -21,33 +21,31 @@ The Docker Image is based on Debian and has the following components installed:
 
 To build it locally as `mycompany/codesign` on the host machine where you intend to use it:
 
-**Intel 64bit**
+**Intel 64Bit**
 ```
 cd /path/to/folder/with/dockerfile
-docker build --no-cache --platform=linux/amd64 --build-arg ARCH=amd64 -t mycompany/codesign .
+docker build --no-cache --platform=linux/amd64 -t mycompany/codesign .
 ```
 
-**ARM 64bit**
+**ARM 64Bit**
 ```
 cd /path/to/folder/with/dockerfile
-docker build --no-cache --platform=linux/arm64/v8 --build-arg ARCH=arm64v8 -t mycompany/codesign .
+docker build --no-cache --platform=linux/arm64 -t mycompany/codesign .
 ```
 
 To create a multi arch Docker Image, push it to Docker Hub and tag it as 'latest':
 
 ```
 cd /path/to/folder/with/dockerfile
-docker build --no-cache --platform=linux/amd64    --build-arg ARCH=amd64   -t mycompany/codesign:1.0.0-amd64 .
-docker build --no-cache --platform=linux/arm64/v8 --build-arg ARCH=arm64v8 -t mycompany/codesign:1.0.0-arm64v8 .
+docker build --no-cache --platform=linux/amd64 -t mycompany/codesign:1.0.0-amd64 .
+docker build --no-cache --platform=linux/arm64 -t mycompany/codesign:1.0.0-arm64 .
 
 docker push mycompany/codesign:1.0.0-amd64
-docker push mycompany/codesign:1.0.0-arm64v8
+docker push mycompany/codesign:1.0.0-arm64
 
-docker manifest create mycompany/codesign:1.0.0 --amend mycompany/codesign:1.0.0-amd64 --amend mycompany/codesign:1.0.0-arm64v8
-docker manifest push mycompany/codesign:1.0.0
-
-docker buildx imagetools create -t mycompany/codesign mycompany/codesign:1.0.0
+docker buildx imagetools create -t mycompany/codesign:1.0.0 -t mycompany/codesign:latest mycompany/codesign:1.0.0-amd64 mycompany/codesign:1.0.0-arm64
 ```
+
 </details>
 
 

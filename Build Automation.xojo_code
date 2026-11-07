@@ -562,6 +562,8 @@
 					End Select
 					
 					'System Requirements for built Windows application
+					'Note: The universal InnoSetup Script creates a 32Bit installer for WIN32, a 64Bit installer for WIN64,
+					'      and for ARM64 a 64Bit installer only if Windows 11 (10.0.22000) is required (otherwise 32Bit)
 					Var sMINVERSION As String = "6.3.9600" 'Require Windows 8.1 with Update 1
 					If (XojoVersion >= 2025.0) Then
 					sMINVERSION = "10.0.18362" 'Require Windows 10 Version 1903 (May 2019 Update)

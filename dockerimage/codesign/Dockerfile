@@ -1,5 +1,5 @@
 # BASE IMAGE
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 # ARGUMENTS IN BUILD STAGE
 ARG DEBIAN_FRONTEND=noninteractive
@@ -7,22 +7,21 @@ ARG DEBIAN_FRONTEND=noninteractive
 # ENVIRONMENT
 ENV TZ=Etc/UTC \
 	DEBIAN_FRONTEND=noninteractive \
-	JSIGN_VERSION=7.4
-
-#INSTALL REQUIRED LIBRARIES
-ARG DEBIAN_FRONTEND=noninteractive
+	JSIGN_VERSION=7.6
 
 # INSTALL REQUIRED PACKAGES
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
 		tzdata \
 		ca-certificates \
 		curl \
 		jq \
-		default-jdk
+		default-jre-headless \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
 # INSTALL jsign
-RUN curl -sL https://github.com/ebourg/jsign/releases/download/${JSIGN_VERSION}/jsign_${JSIGN_VERSION}_all.deb -o ./jsign.deb \
+RUN curl -fsSL "https://github.com/ebourg/jsign/releases/download/${JSIGN_VERSION}/jsign_${JSIGN_VERSION}_all.deb" -o ./jsign.deb \
 	&& dpkg --install ./jsign.deb \
 	&& rm ./jsign.deb
 
@@ -36,7 +35,7 @@ COPY ./scripts /usr/local/bin
 RUN chmod 755 /usr/local/bin/aas-codesign.sh \
 	&& chmod 755 /usr/local/bin/pfx-codesign.sh
 
-#PREPARE CONTAINER
+# PREPARE CONTAINER
 RUN mkdir -p /etc/aas-codesign \
 	&& mkdir -p /etc/pfx-codesign \
 	&& mkdir -p /data
