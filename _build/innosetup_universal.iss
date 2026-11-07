@@ -17,16 +17,16 @@
 ; Note: InnoSetup 7 is required (SetupArchitecture, GetFileProductVersionString)
 ; - WIN32: 32-bit Setup (x86)
 ; - WIN64: 64-bit Setup (x64)
-; - ARM64: 32-bit Setup (x86) - InnoSetup has no Arm64 Setup.
-;          Windows on Arm runs Intel binaries via emulation:
-;          Windows 10 on Arm can only emulate x86 (32-bit),
-;          x64 (64-bit) emulation requires Windows 11 on Arm.
-;          So a x86 Setup runs on both Windows 10 and 11 on Arm64,
-;          while a x64 Setup would only run on Windows 11 on Arm64.
+; - ARM64: depends on csMinVersion (there is no ARM64 Setup)
+;          Windows on ARM runs Intel binaries via emulation:
+;          Windows 10 on ARM can only emulate x86 (32-bit),
+;          Windows 11 on ARM can also emulate x64 (64-bit).
+;          csMinVersion below 10.0.22000 (Windows 10): 32-bit Setup (x86)
+;          csMinVersion 10.0.22000 or higher (Windows 11): 64-bit Setup (x64)
 ; ------------------------------------------------------------------------
 ; Minimum Version of Windows (for Installation Requirements)
 ; ------------------------------------------------------------------------
-; /DcsMinVersion="My App Publisher"
+; /DcsMinVersion="major.minor.build" (Windows version)
 ; Xojo 2025r1.1: Require Windows 10 Version 1903 (May 2019 Update)
 ; /DcsMinVersion="10.0.18362"
 ; Xojo 2024r4.2: Require Windows 8.1 with Update 1
@@ -95,7 +95,7 @@ WizardStyle=modern
 ; never allow a WIN32 to be installed on ARM64
   ArchitecturesAllowed=not arm64
 #elif defined(csBuildTargetWIN64)
-; 64-bit Setup (runs on x64 Windows and on Windows 11 on Arm64)
+; 64-bit Setup (runs on x64 Windows and on Windows 11 on ARM64)
   SetupArchitecture=x64
   ArchitecturesInstallIn64BitMode=x64compatible
 ; if you want to prevent installing the WIN64 Intel Build on ARM64 (even if it works)
@@ -103,10 +103,13 @@ WizardStyle=modern
 ; allow installing the WIN64 Intel Build on ARM64
   ArchitecturesAllowed=x64compatible
 #elif defined(csBuildTargetARM64)
-; 32-bit Setup: Windows 10 on Arm can only emulate x86 (no x64 emulation),
-;               so a x86 Setup runs on Windows 10 and 11 on Arm64
-;               (a x64 Setup would require Windows 11 on Arm64)
+; 64-bit Setup only if Windows 11 is required (Windows 10 on ARM can't emulate x64)
+; Note: StrToVersion expects 4 components (else 10.0.22000 is parsed as 10.0.0.22000)
+#if StrToVersion(csMinVersion + ".0") >= StrToVersion("10.0.22000.0")
+  SetupArchitecture=x64
+#else
   SetupArchitecture=x86
+#endif
 ; require ARM64 - the application won't run on Intel
   ArchitecturesInstallIn64BitMode=arm64
   ArchitecturesAllowed=arm64

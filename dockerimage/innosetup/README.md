@@ -72,7 +72,7 @@ The usage of the Docker Image is unchanged *(entry points, parameters, mounts an
   - changed defaults: `AppVerName` *(no more word "version")*, `TimeStampsInUTC=yes`
   - `.isl` files with `#` lines and invalid characters in `.iss`/`.isl` files are now an error
 - **64-bit Installer**  
-  InnoSetup 7 can create 64-bit installers with `SetupArchitecture=x64`. The universal InnoSetup script `_build/innosetup_universal.iss` of the example project creates a 64-bit installer for 64-bit (Intel) builds.  
+  InnoSetup 7 can create 64-bit installers with `SetupArchitecture=x64`. The universal InnoSetup script `_build/innosetup_universal.iss` of the example project creates a 64-bit installer for 64-bit (Intel) builds, and for ARM64 builds if Windows 11 is required *(`csMinVersion` 10.0.22000 or higher)*.  
   If you keep using a copy of the previous version of the universal InnoSetup script, a 32-bit installer will be created *(just as before)*. InnoSetup 7 will show a harmless warning: `Function "GetFileProductVersion" has been renamed. Use "GetFileProductVersionString" instead.`
 - **Codesigning errors**  
   If codesigning with `aas-codesign.bat` or `pfx-codesign.bat` fails *(or times out)*, InnoSetup fails too.
