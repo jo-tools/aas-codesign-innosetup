@@ -21,13 +21,13 @@ The Docker Image is based on Debian and has the following components installed:
 
 To build it locally as `mycompany/codesign` on the host machine where you intend to use it:
 
-**Intel 64bit**
+**Intel 64Bit**
 ```
 cd /path/to/folder/with/dockerfile
 docker build --no-cache --platform=linux/amd64 -t mycompany/codesign .
 ```
 
-**ARM 64bit**
+**ARM 64Bit**
 ```
 cd /path/to/folder/with/dockerfile
 docker build --no-cache --platform=linux/arm64 -t mycompany/codesign .

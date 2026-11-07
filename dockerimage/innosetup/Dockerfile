@@ -18,7 +18,7 @@ ENV TZ=Etc/UTC \
 	JSIGN_VERSION=7.6
 
 # INSTALL WINE AND REQUIRED PACKAGES
-# InnoSetup 7 (x64 edition) runs in a 64-bit wine prefix
+# InnoSetup 7 (x64 edition) runs in a 64Bit wine prefix
 # - amd64: native wine64
 # - arm64: wine64 for amd64 (multiarch), executed via the host's binfmt emulation
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
@@ -69,9 +69,9 @@ RUN mkdir -p /opt/bin \
 
 # SETUP WINE PREFIX AND INSTALL INNOSETUP ON WINE
 # wine32 (i386) is only required temporarily to install InnoSetup:
-# a 64-bit Setup of InnoSetup 7 requires WOW64 (support for running x86 binaries).
+# a 64Bit Setup of InnoSetup 7 requires WOW64 (support for running x86 binaries).
 # This is all done in one layer, so that wine32, Xvfb and procps are not part of the image.
-# The 32-bit DLLs in the wine prefix (syswow64) are not needed without wine32 either.
+# The 32Bit DLLs in the wine prefix (syswow64) are not needed without wine32 either.
 RUN dpkg --add-architecture i386 \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \

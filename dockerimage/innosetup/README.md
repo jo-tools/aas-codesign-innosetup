@@ -2,7 +2,7 @@
 
 The Docker Image is based on Debian and has the following components installed:
 - A couple of required Libraries
-  - curl, jq, Java Runtime *(default-jre-headless)*, wine *(64-bit)*
+  - curl, jq, Java Runtime *(default-jre-headless)*, wine *(64Bit)*
 - [jsign](https://github.com/ebourg/jsign)  
   Authenticode signing tool in Java
 - `aas-codesign.sh` and `pfx-codesign.sh`  
@@ -11,7 +11,7 @@ The Docker Image is based on Debian and has the following components installed:
     `aas-codesign.sh [FILE] [PATTERN] [@FILELIST]...`  
     `pfx-codesign.sh [FILE] [PATTERN] [@FILELIST]...`  
   - Documentation: [jsign - Command Line Tool: `[FILE] [PATTERN] [@FILELIST]...`](https://ebourg.github.io/jsign/)
-- [InnoSetup 7](https://jrsoftware.org/isinfo.php) *(64-bit edition)*  
+- [InnoSetup 7](https://jrsoftware.org/isinfo.php) *(64Bit edition)*  
   Inno Setup is a free installer for Windows programs
   - This is a windows application, so it runs under [wine](https://www.winehq.org)
   - This Docker Image includes helper scripts:
@@ -28,13 +28,13 @@ The Docker Image is based on Debian and has the following components installed:
 
 To build it locally as `mycompany/innosetup` on the host machine where you intend to use it:
 
-**Intel 64bit**
+**Intel 64Bit**
 ```
 cd /path/to/folder/with/dockerfile
 docker build --no-cache --platform=linux/amd64 -t mycompany/innosetup .
 ```
 
-**ARM 64bit**
+**ARM 64Bit**
 ```
 cd /path/to/folder/with/dockerfile
 docker build --no-cache --platform=linux/arm64 -t mycompany/innosetup .
@@ -71,13 +71,13 @@ The usage of the Docker Image is unchanged *(entry points, parameters, mounts an
   - Pascal Scripting: `EnableFsRedirection` has been removed, new built-in types *(e.g. `NativeInt`, `HWND`)*, changes to `FloatToStr`, `IsWildcard` and `CreateCustomForm`
   - changed defaults: `AppVerName` *(no more word "version")*, `TimeStampsInUTC=yes`
   - `.isl` files with `#` lines and invalid characters in `.iss`/`.isl` files are now an error
-- **64-bit Installer**  
-  InnoSetup 7 can create 64-bit installers with `SetupArchitecture=x64`. The universal InnoSetup script `_build/innosetup_universal.iss` of the example project creates a 64-bit installer for 64-bit (Intel) builds, and for ARM64 builds if Windows 11 is required *(`csMinVersion` 10.0.22000 or higher)*.  
-  If you keep using a copy of the previous version of the universal InnoSetup script, a 32-bit installer will be created *(just as before)*. InnoSetup 7 will show a harmless warning: `Function "GetFileProductVersion" has been renamed. Use "GetFileProductVersionString" instead.`
+- **64Bit Installer**  
+  InnoSetup 7 can create 64Bit installers with `SetupArchitecture=x64`. The universal InnoSetup script `_build/innosetup_universal.iss` of the example project creates a 64Bit installer for 64Bit (Intel) builds, and for ARM64 builds if Windows 11 is required *(`csMinVersion` 10.0.22000 or higher)*.  
+  If you keep using a copy of the previous version of the universal InnoSetup script, a 32Bit installer will be created *(just as before)*. InnoSetup 7 will show a harmless warning: `Function "GetFileProductVersion" has been renamed. Use "GetFileProductVersionString" instead.`
 - **Codesigning errors**  
   If codesigning with `aas-codesign.bat` or `pfx-codesign.bat` fails *(or times out)*, InnoSetup fails too.
 - **Internal changes** *(only relevant if you're using `wine` in the Docker Container directly)*  
-  The wine prefix is now 64-bit, and InnoSetup is installed in `C:\Program Files\Inno Setup 7\` *(environment variable `ISCC_EXE`)*.
+  The wine prefix is now 64Bit, and InnoSetup is installed in `C:\Program Files\Inno Setup 7\` *(environment variable `ISCC_EXE`)*.
 - **wine output**  
   wine debug output is disabled by default (`WINEDEBUG=-all`). To troubleshoot, run the Docker Container with e.g. `-e WINEDEBUG=fixme-all`.
 
