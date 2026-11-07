@@ -14,6 +14,15 @@
 ; ------------------------------------------------------------------------
 ; one of the following
 ; /DcsBuildTargetWIN32 | /DcsBuildTargetWIN64 | /DcsBuildTargetARM64
+; Note: InnoSetup 7 is required (SetupArchitecture, GetFileProductVersionString)
+; - WIN32: 32-bit Setup (x86)
+; - WIN64: 64-bit Setup (x64)
+; - ARM64: 32-bit Setup (x86) - InnoSetup has no Arm64 Setup.
+;          Windows on Arm runs Intel binaries via emulation:
+;          Windows 10 on Arm can only emulate x86 (32-bit),
+;          x64 (64-bit) emulation requires Windows 11 on Arm.
+;          So a x86 Setup runs on both Windows 10 and 11 on Arm64,
+;          while a x64 Setup would only run on Windows 11 on Arm64.
 ; ------------------------------------------------------------------------
 ; Minimum Version of Windows (for Installation Requirements)
 ; ------------------------------------------------------------------------
@@ -61,27 +70,7 @@
   #define csMinVersion "10.0.18362"
 #endif
 
-#define ApplicationVersion	GetFileProductVersion(AddBackslash(SourcePath) + csExeName)
-
-//
-// GetStringFileInfo standard names
-//
-#define COMPANY_NAME       "CompanyName"
-#define FILE_DESCRIPTION   "FileDescription"
-#define FILE_VERSION       "FileVersion"
-#define INTERNAL_NAME      "InternalName"
-#define LEGAL_COPYRIGHT    "LegalCopyright"
-#define ORIGINAL_FILENAME  "OriginalFilename"
-#define PRODUCT_NAME       "ProductName"
-#define PRODUCT_VERSION    "ProductVersion"
-//
-// GetStringFileInfo helpers
-//
-#define GetFileCompany(str FileName) GetStringFileInfo(FileName, COMPANY_NAME)
-#define GetFileCopyright(str FileName) GetStringFileInfo(FileName, LEGAL_COPYRIGHT)
-#define GetFileDescription(str FileName) GetStringFileInfo(FileName, FILE_DESCRIPTION)
-#define GetFileProductVersion(str FileName) GetStringFileInfo(FileName, PRODUCT_VERSION)
-#define GetFileVersionString(str FileName) GetStringFileInfo(FileName, FILE_VERSION)
+#define ApplicationVersion	GetFileProductVersionString(AddBackslash(SourcePath) + csExeName)
 
 
 [Setup]
@@ -101,15 +90,23 @@ WizardStyle=modern
 ; Note: Remove 'not arm64' if you want to allow WIN32 or WIN64 apps to run on Windows ARM
 ;       This example will only allow installing the ARM64 build on Windows ARM
 #if defined(csBuildTargetWIN32)
+; 32-bit Setup
+  SetupArchitecture=x86
 ; never allow a WIN32 to be installed on ARM64
   ArchitecturesAllowed=not arm64
 #elif defined(csBuildTargetWIN64)
+; 64-bit Setup (runs on x64 Windows and on Windows 11 on Arm64)
+  SetupArchitecture=x64
   ArchitecturesInstallIn64BitMode=x64compatible
 ; if you want to prevent installing the WIN64 Intel Build on ARM64 (even if it works)
 ; ArchitecturesAllowed=x64compatible and not arm64
 ; allow installing the WIN64 Intel Build on ARM64
   ArchitecturesAllowed=x64compatible
 #elif defined(csBuildTargetARM64)
+; 32-bit Setup: Windows 10 on Arm can only emulate x86 (no x64 emulation),
+;               so a x86 Setup runs on Windows 10 and 11 on Arm64
+;               (a x64 Setup would require Windows 11 on Arm64)
+  SetupArchitecture=x86
 ; require ARM64 - the application won't run on Intel
   ArchitecturesInstallIn64BitMode=arm64
   ArchitecturesAllowed=arm64
