@@ -1,30 +1,43 @@
 # BASE IMAGE
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 # ARGUMENTS IN BUILD STAGE
 ARG DEBIAN_FRONTEND=noninteractive
+# set automatically by BuildKit: amd64 | arm64
+ARG TARGETARCH
 
 # ENVIRONMENT
 ENV TZ=Etc/UTC \
 	DEBIAN_FRONTEND=noninteractive \
-	WINEARCH=win32 \
+	WINEARCH=win64 \
+	WINEDEBUG=-all \
 	DISPLAY=:0 \
-	INNOSETUP_VERSION=6.7.1 \
-	JSIGN_VERSION=7.4
+	XDG_RUNTIME_DIR=/run/user/0 \
+	INNOSETUP_VERSION=7.1.1 \
+	ISCC_EXE="/root/.wine/drive_c/Program Files/Inno Setup 7/ISCC.exe" \
+	JSIGN_VERSION=7.6
 
 # INSTALL WINE AND REQUIRED PACKAGES
-RUN dpkg --add-architecture i386 \
+# InnoSetup 7 (x64 edition) runs in a 64-bit wine prefix
+# - amd64: native wine64
+# - arm64: wine64 for amd64 (multiarch), executed via the host's binfmt emulation
+RUN if [ "${TARGETARCH}" = "arm64" ]; then \
+		dpkg --add-architecture amd64 && WINE64_PACKAGE="wine64:amd64"; \
+	else \
+		WINE64_PACKAGE="wine64"; \
+	fi \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		tzdata \
-        curl \
-        ca-certificates \
+		curl \
+		ca-certificates \
 		jq \
-		default-jdk \
-		procps \
-		xvfb \
+		default-jre-headless \
 		wine \
-		wine32
+		${WINE64_PACKAGE} \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& mkdir -p -m 0700 "${XDG_RUNTIME_DIR}"
 
 # SETUP HELPER SCRIPTS
 RUN mkdir -p /opt/bin \
@@ -54,28 +67,46 @@ RUN mkdir -p /opt/bin \
 	&& echo 'exit $retval' >> ./wine-xvfb \
 	&& chmod +x ./wine-xvfb
 
-# WINE: SHOW DOT FILES
-RUN wine reg add 'HKEY_CURRENT_USER\Software\Wine' /v ShowDotFiles /d Y \
-	&& while [ ! -f ~/.wine/user.reg ]; do sleep 1; done
-
-# INSTALL INNOSETUP ON WINE
-RUN INNOSETUP_TAG=$(echo "$INNOSETUP_VERSION" | tr . _) \
-    && curl -sLf "https://github.com/jrsoftware/issrc/releases/download/is-${INNOSETUP_TAG}/innosetup-${INNOSETUP_VERSION}.exe" -o ./innosetup.exe \
-    && ./wine-xvfb wine innosetup.exe /SP- /VERYSILENT /ALLUSERS /SUPPRESSMSGBOXES \
-    && rm ./innosetup.exe
-
-# Clean up
-RUN rm ./waitonproc \
+# SETUP WINE PREFIX AND INSTALL INNOSETUP ON WINE
+# wine32 (i386) is only required temporarily to install InnoSetup:
+# a 64-bit Setup of InnoSetup 7 requires WOW64 (support for running x86 binaries).
+# This is all done in one layer, so that wine32, Xvfb and procps are not part of the image.
+# The 32-bit DLLs in the wine prefix (syswow64) are not needed without wine32 either.
+RUN dpkg --add-architecture i386 \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		procps \
+		xvfb \
+		wine32:i386 \
+	\
+	&& wine reg add 'HKEY_CURRENT_USER\Software\Wine' /v ShowDotFiles /d Y \
+	&& COUNT=0 \
+	&& while [ ! -f ~/.wine/user.reg ]; do \
+		sleep 1; COUNT=$((COUNT+1)); \
+		if [ $COUNT -ge 120 ]; then echo "wine prefix not created"; exit 3; fi; \
+	done \
+	\
+	&& INNOSETUP_TAG=$(echo "$INNOSETUP_VERSION" | tr . _) \
+	&& curl -fsSL "https://github.com/jrsoftware/issrc/releases/download/is-${INNOSETUP_TAG}/innosetup-${INNOSETUP_VERSION}-x64.exe" -o ./innosetup.exe \
+	&& ./wine-xvfb wine innosetup.exe /SP- /VERYSILENT /ALLUSERS /SUPPRESSMSGBOXES /NORESTART \
+	&& rm ./innosetup.exe \
+	&& test -f "${ISCC_EXE}" \
+	\
+	&& rm ./waitonproc \
 	&& rm ./wine-xvfb \
 	&& apt-get purge --auto-remove -y \
 		procps \
 		xvfb \
+		wine32:i386 \
+	&& apt-get purge -y --allow-remove-essential $(dpkg-query -W -f '${binary:Package}\n' | grep ':i386$') \
+	&& dpkg --remove-architecture i386 \
+	&& rm -rf /root/.wine/drive_c/windows/syswow64/* \
 	&& apt-get -y autoremove \
 	&& apt-get clean autoclean \
-	&& rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists
+	&& rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
 
 # INSTALL jsign
-RUN curl -sL https://github.com/ebourg/jsign/releases/download/${JSIGN_VERSION}/jsign_${JSIGN_VERSION}_all.deb -o ./jsign.deb \
+RUN curl -fsSL "https://github.com/ebourg/jsign/releases/download/${JSIGN_VERSION}/jsign_${JSIGN_VERSION}_all.deb" -o ./jsign.deb \
 	&& dpkg --install ./jsign.deb \
 	&& rm ./jsign.deb
 
